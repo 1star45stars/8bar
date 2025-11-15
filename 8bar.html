@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8-Bar Loop Challenge Tracker</title>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        const { useState, useEffect } = React;
+        const e = React.createElement;
+
+        // Icon components
+        const Music = ({ className }) => e('svg', { className, fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' },
+            e('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3' })
+        );
+
+        const Trophy = ({ className }) => e('svg', { className, fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' },
+            e('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' })
+        );
+
+        const Check = ({ className }) => e('svg', { className, fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' },
+            e('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M5 13l4 4L19 7' })
+        );
+
+        const X = ({ className }) => e('svg', { className, fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' },
+            e('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M6 18L18 6M6 6l12 12' })
+        );
+
+        const RotateCcw = ({ className }) => e('svg', { className, fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' },
+            e('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6' })
+        );
+
+        const genres = {
+            Pop: {
+                color: 'bg-pink-500',
+                challenges: [
+                    {
+                        title: "Catchy Hook Loop",
+                        bpm: "120-128 BPM",
+                        key: "C Major or G Major",
+                        focus: "Memorable vocal melody, punchy drums, synth layers",
+                        tips: "Think verse or pre-chorus energy. Use sidechain compression on bass with kick.",
+                        reference: "Style: Dua Lipa, The Weeknd, Doja Cat"
+                    },
+                    {
+                        title: "Dance-Pop Groove",
+                        bpm: "118-124 BPM",
+                        key: "D Minor or A Minor",
+                        focus: "Four-on-the-floor kick, rhythmic synth stabs, vocal chops",
+                        tips: "Create movement with filter automation. Layer claps and snares.",
+                        reference: "Style: Calvin Harris, Ariana Grande"
+                    },
+                    {
+                        title: "Tropical Pop Vibe",
+                        bpm: "100-110 BPM",
+                        key: "F Major or C Major",
+                        focus: "Steel drums/marimbas, laid-back groove, airy pads",
+                        tips: "Use off-beat percussion. Keep it sparse and breezy.",
+                        reference: "Style: Justin Bieber - Sorry, Kygo"
+                    },
+                    {
+                        title: "Hyperpop Energy",
+                        bpm: "140-160 BPM",
+                        key: "Any key",
+                        focus: "Distorted bass, auto-tuned vocals, glitchy effects",
+                        tips: "Go extreme with processing. Layer tons of sounds. Be chaotic.",
+                        reference: "Style: Charli XCX, 100 gecs"
+                    }
+                ]
+            },
+            Kpop: {
+                color: 'bg-purple-500',
+                challenges: [
+                    {
+                        title: "Girl Group Banger",
+                        bpm: "128-135 BPM",
+                        key: "E Minor or B Minor",
+                        focus: "Aggressive synth bass, trap hi-hats, powerful chord progression",
+                        tips: "Create a 'point move' moment. Use brass or orchestra hits for impact.",
+                        reference: "Style: BLACKPINK, aespa, ITZY"
+                    },
+                    {
+                        title: "Boy Group Power Track",
+                        bpm: "90-110 BPM",
+                        key: "A Minor or D Minor",
+                        focus: "Hip-hop influenced beat, deep 808s, atmospheric synths",
+                        tips: "Mix trap and EDM elements. Use vocal ad-libs as percussion.",
+                        reference: "Style: Stray Kids, ATEEZ, NCT"
+                    },
+                    {
+                        title: "Cute/Bubblegum Pop",
+                        bpm: "120-140 BPM",
+                        key: "C Major or G Major",
+                        focus: "Bright synths, playful melodies, bouncy bass",
+                        tips: "Use plucky synths and bells. Keep it light and fun.",
+                        reference: "Style: TWICE, NewJeans - OMG"
+                    },
+                    {
+                        title: "R&B Kpop Fusion",
+                        bpm: "75-95 BPM",
+                        key: "F# Minor or C# Minor",
+                        focus: "Smooth vocal harmonies, trap-influenced drums, lush chords",
+                        tips: "Blend sultry with modern production. Use vocal layering heavily.",
+                        reference: "Style: EXO, SHINee, IU"
+                    }
+                ]
+            },
+            Ballads: {
+                color: 'bg-blue-500',
+                challenges: [
+                    {
+                        title: "Piano-Driven Ballad",
+                        bpm: "60-75 BPM",
+                        key: "C Minor or G Minor",
+                        focus: "Emotional piano progression, subtle strings, space for vocals",
+                        tips: "Less is more. Focus on the chord progression and dynamics.",
+                        reference: "Style: Adele, Sam Smith"
+                    },
+                    {
+                        title: "Modern Pop Ballad",
+                        bpm: "70-85 BPM",
+                        key: "A Major or E Major",
+                        focus: "Acoustic guitar or piano + modern production, reverb-heavy",
+                        tips: "Build subtle layers. Use pad synths for atmosphere.",
+                        reference: "Style: Lewis Capaldi, Billie Eilish ballads"
+                    },
+                    {
+                        title: "K-Ballad OST Style",
+                        bpm: "65-80 BPM",
+                        key: "D Major or B♭ Major",
+                        focus: "Orchestral elements, emotional build, cinematic feel",
+                        tips: "Think drama OST. String swells and gentle piano arpeggios.",
+                        reference: "Style: Ailee, Taeyeon, Paul Kim"
+                    },
+                    {
+                        title: "Gospel-Influenced Ballad",
+                        bpm: "60-72 BPM",
+                        key: "F Major or C Major",
+                        focus: "Organ/keys, uplifting progression, choir-like harmonies",
+                        tips: "Use extended chords (9ths, 11ths). Build from simple to powerful.",
+                        reference: "Style: John Legend, Mariah Carey"
+                    }
+                ]
+            },
+            Soul: {
+                color: 'bg-amber-500',
+                challenges: [
+                    {
+                        title: "Neo-Soul Groove",
+                        bpm: "85-95 BPM",
+                        key: "E♭ Major or B♭ Major",
+                        focus: "Electric piano (Rhodes/Wurlitzer), smooth bass, live-feel drums",
+                        tips: "Swing the drums slightly. Use jazzy chord extensions (7ths, 9ths).",
+                        reference: "Style: Erykah Badu, D'Angelo, H.E.R."
+                    },
+                    {
+                        title: "Classic Soul Jam",
+                        bpm: "90-110 BPM",
+                        key: "C Major or F Major",
+                        focus: "Funky guitar rhythm, punchy horns, grooving bass line",
+                        tips: "Think Motown. Tight rhythm section, horn stabs on upbeats.",
+                        reference: "Style: Stevie Wonder, Marvin Gaye, Amy Winehouse"
+                    },
+                    {
+                        title: "Modern R&B/Soul Fusion",
+                        bpm: "70-90 BPM",
+                        key: "G Minor or D Minor",
+                        focus: "Trap-influenced drums, smooth synths, vocal harmonies",
+                        tips: "Blend organic with electronic. Use subtle 808s and crispy hi-hats.",
+                        reference: "Style: SZA, Brent Faiyaz, Lucky Daye"
+                    },
+                    {
+                        title: "Jazzy Soul Vibes",
+                        bpm: "75-95 BPM",
+                        key: "A♭ Major or E♭ Major",
+                        focus: "Jazz chords, walking bass, brush drums or lo-fi beat",
+                        tips: "Use ii-V-I progressions. Add vinyl crackle for texture.",
+                        reference: "Style: Robert Glasper, Tom Misch, Jordan Rakei"
+                    }
+                ]
+            }
+        };
+
+        function LoopChallenge() {
+            const [challenges, setChallenges] = useState([]);
+            const [expandedGenre, setExpandedGenre] = useState(null);
+
+            useEffect(() => {
+                loadProgress();
+            }, []);
+
+            const loadProgress = () => {
+                const saved = localStorage.getItem('loop-challenge-progress');
+                if (saved) {
+                    setChallenges(JSON.parse(saved));
+                } else {
+                    initializeChallenges();
+                }
+            };
+
+            const initializeChallenges = () => {
+                const allChallenges = [];
+                Object.entries(genres).forEach(([genreName, genreData]) => {
+                    genreData.challenges.forEach((challenge, idx) => {
+                        allChallenges.push({
+                            id: `${genreName}-${idx}`,
+                            genre: genreName,
+                            ...challenge,
+                            completed: false,
+                            color: genreData.color
+                        });
+                    });
+                });
+                setChallenges(allChallenges);
+                saveProgress(allChallenges);
+            };
+
+            const saveProgress = (data) => {
+                localStorage.setItem('loop-challenge-progress', JSON.stringify(data));
+            };
+
+            const toggleComplete = (id) => {
+                const updated = challenges.map(c => 
+                    c.id === id ? { ...c, completed: !c.completed } : c
+                );
+                setChallenges(updated);
+                saveProgress(updated);
+            };
+
+            const resetChallenge = () => {
+                if (window.confirm('Are you sure you want to reset all progress?')) {
+                    initializeChallenges();
+                }
+            };
+
+            const stats = {
+                total: challenges.length,
+                completed: challenges.filter(c => c.completed).length,
+                byGenre: Object.keys(genres).map(genre => ({
+                    name: genre,
+                    total: challenges.filter(c => c.genre === genre).length,
+                    completed: challenges.filter(c => c.genre === genre && c.completed).length
+                }))
+            };
+
+            const progress = challenges.length > 0 ? (stats.completed / stats.total) * 100 : 0;
+
+            return e('div', { className: 'min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 md:p-8' },
+                e('div', { className: 'max-w-6xl mx-auto' },
+                    // Header
+                    e('div', { className: 'text-center mb-8' },
+                        e('div', { className: 'flex items-center justify-center gap-3 mb-4' },
+                            e(Music, { className: 'w-12 h-12 text-purple-400' }),
+                            e('h1', { className: 'text-4xl md:text-5xl font-bold text-white' }, '8-Bar Loop Challenge')
+                        ),
+                        e('p', { className: 'text-purple-200 text-lg' }, 'Master your craft across Pop, K-pop, Ballads & Soul')
+                    ),
+
+                    // Stats Dashboard
+                    e('div', { className: 'bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 border border-white/20' },
+                        e('div', { className: 'flex items-center justify-between mb-4' },
+                            e('div', { className: 'flex items-center gap-3' },
+                                e(Trophy, { className: 'w-8 h-8 text-yellow-400' }),
+                                e('div', null,
+                                    e('p', { className: 'text-white text-2xl font-bold' }, `${stats.completed} / ${stats.total}`),
+                                    e('p', { className: 'text-purple-200 text-sm' }, 'Loops Completed')
+                                )
+                            ),
+                            e('button', {
+                                onClick: resetChallenge,
+                                className: 'flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-200 rounded-lg transition-colors'
+                            },
+                                e(RotateCcw, { className: 'w-4 h-4' }),
+                                'Reset'
+                            )
+                        ),
+
+                        // Progress Bar
+                        e('div', { className: 'w-full bg-white/10 rounded-full h-4 mb-4' },
+                            e('div', {
+                                className: 'bg-gradient-to-r from-purple-500 to-pink-500 h-4 rounded-full transition-all duration-500 flex items-center justify-end pr-2',
+                                style: { width: `${progress}%` }
+                            },
+                                progress > 10 && e('span', { className: 'text-white text-xs font-bold' }, `${Math.round(progress)}%`)
+                            )
+                        ),
+
+                        // Genre Stats
+                        e('div', { className: 'grid grid-cols-2 md:grid-cols-4 gap-3' },
+                            stats.byGenre.map(genre =>
+                                e('div', { key: genre.name, className: 'bg-white/5 rounded-lg p-3 text-center' },
+                                    e('p', { className: 'text-white font-semibold' }, genre.name),
+                                    e('p', { className: 'text-purple-200 text-sm' }, `${genre.completed}/${genre.total}`)
+                                )
+                            )
+                        )
+                    ),
+
+                    // Genre Sections
+                    Object.entries(genres).map(([genreName, genreData]) => {
+                        const genreChallenges = challenges.filter(c => c.genre === genreName);
+                        const genreCompleted = genreChallenges.filter(c => c.completed).length;
+
+                        return e('div', { key: genreName, className: 'mb-6' },
+                            e('button', {
+                                onClick: () => setExpandedGenre(expandedGenre === genreName ? null : genreName),
+                                className: 'w-full bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 hover:bg-white/15 transition-all'
+                            },
+                                e('div', { className: 'flex items-center justify-between' },
+                                    e('div', { className: 'flex items-center gap-4' },
+                                        e('div', { className: `${genreData.color} w-3 h-12 rounded-full` }),
+                                        e('div', { className: 'text-left' },
+                                            e('h2', { className: 'text-2xl font-bold text-white' }, genreName),
+                                            e('p', { className: 'text-purple-200 text-sm' }, `${genreCompleted} of ${genreChallenges.length} completed`)
+                                        )
+                                    ),
+                                    e('div', { className: 'text-3xl text-white' }, expandedGenre === genreName ? '−' : '+')
+                                )
+                            ),
+
+                            expandedGenre === genreName && e('div', { className: 'mt-4 space-y-4' },
+                                genreChallenges.map(challenge =>
+                                    e('div', {
+                                        key: challenge.id,
+                                        className: `bg-white/5 backdrop-blur-lg rounded-xl p-6 border ${challenge.completed ? 'border-green-500/50' : 'border-white/10'} transition-all`
+                                    },
+                                        e('div', { className: 'flex items-start justify-between mb-4' },
+                                            e('div', { className: 'flex-1' },
+                                                e('div', { className: 'flex items-center gap-3 mb-2' },
+                                                    e('h3', { className: 'text-xl font-bold text-white' }, challenge.title),
+                                                    challenge.completed && e('span', { className: 'bg-green-500 text-white text-xs px-2 py-1 rounded-full' }, '✓ Done')
+                                                ),
+                                                e('div', { className: 'flex flex-wrap gap-3 text-sm mb-3' },
+                                                    e('span', { className: 'bg-purple-500/20 text-purple-200 px-3 py-1 rounded-full' }, challenge.bpm),
+                                                    e('span', { className: 'bg-blue-500/20 text-blue-200 px-3 py-1 rounded-full' }, challenge.key)
+                                                )
+                                            ),
+                                            e('button', {
+                                                onClick: () => toggleComplete(challenge.id),
+                                                className: `ml-4 w-12 h-12 rounded-full flex items-center justify-center transition-all ${challenge.completed ? 'bg-green-500 hover:bg-green-600' : 'bg-white/10 hover:bg-white/20'}`
+                                            },
+                                                challenge.completed ? e(Check, { className: 'w-6 h-6 text-white' }) : e(X, { className: 'w-6 h-6 text-white/50' })
+                                            )
+                                        ),
+
+                                        e('div', { className: 'space-y-3' },
+                                            e('div', null,
+                                                e('p', { className: 'text-purple-300 font-semibold mb-1' }, 'Focus:'),
+                                                e('p', { className: 'text-white/90' }, challenge.focus)
+                                            ),
+                                            e('div', null,
+                                                e('p', { className: 'text-purple-300 font-semibold mb-1' }, 'Pro Tips:'),
+                                                e('p', { className: 'text-white/90' }, challenge.tips)
+                                            ),
+                                            e('div', null,
+                                                e('p', { className: 'text-purple-300 font-semibold mb-1' }, 'Reference:'),
+                                                e('p', { className: 'text-white/80 italic' }, challenge.reference)
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        );
+                    }),
+
+                    // Footer
+                    e('div', { className: 'bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-white/10 mt-8' },
+                        e('h3', { className: 'text-xl font-bold text-white mb-3' }, 'Challenge Guidelines:'),
+                        e('ul', { className: 'space-y-2 text-purple-200' },
+                            e('li', null, '• Each loop should be exactly 8 bars (32 beats in 4/4 time)'),
+                            e('li', null, '• Focus on creating a strong foundation you could build a full track from'),
+                            e('li', null, '• Don\'t worry about mixing perfection - focus on arrangement and vibe'),
+                            e('li', null, '• Set a 30-60 minute time limit per loop to avoid overthinking'),
+                            e('li', null, '• Save all your loops - they\'re great starting points for full tracks later'),
+                            e('li', null, '• Try to complete one loop per day, or 3-4 per week')
+                        )
+                    )
+                )
+            );
+        }
+
+        ReactDOM.render(e(LoopChallenge), document.getElementById('root'));
+    </script>
+</body>
+</html>
